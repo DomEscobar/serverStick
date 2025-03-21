@@ -109,14 +109,10 @@ io.on('connection', (socket) => {
 
 	// Handle messages from clients
 	socket.on('message', (message) => {
-		if (message.type !== 'GET_QUEUE' && message.type !== 'PING') {
-			console.log('Received message:', message.type, 'from user:', message.userId);
-		}
 
 		// Keep track of user ID to socket ID mapping
 		if (message.userId) {
 			userSocketMap.set(message.userId, socket.id);
-			console.log(`Mapped user ${message.userId} to socket ${socket.id}`);
 		}
 
 		switch (message.type) {
@@ -129,18 +125,11 @@ io.on('connection', (socket) => {
 					appearance: message.appearance || {}
 				};
 
-				console.log(`Player appearance data:`,
-					JSON.stringify(message.appearance ?
-						{ type: message.appearance.type } :
-						'None')
-				);
-
 				// Remove any existing entries for this user
 				matchmakingQueue = matchmakingQueue.filter(p => p.userId !== message.userId);
 
 				// Add to queue
 				matchmakingQueue.push(playerInfo);
-				console.log(`${playerInfo.username} (${playerInfo.userId}) joined the matchmaking queue`);
 
 				// Broadcast queue update
 				broadcastQueueUpdate();
@@ -152,7 +141,6 @@ io.on('connection', (socket) => {
 			case 'LEAVE_QUEUE':
 				// Remove player from queue
 				matchmakingQueue = matchmakingQueue.filter(p => p.userId !== message.userId);
-				console.log(`User ${message.userId} left the matchmaking queue`);
 
 				// Broadcast queue update
 				broadcastQueueUpdate();
@@ -191,7 +179,6 @@ io.on('connection', (socket) => {
 
 			case 'JOIN_BATTLE':
 				// Find the battle with the given code
-				console.log('Joining battle ==> ', message.battleId);
 				const battleToJoin = Object.values(battles).find(b =>
 					b.battleId === message.battleId && !b.started
 				);
@@ -247,11 +234,9 @@ io.on('connection', (socket) => {
 					// Update win counts based on the winner
 					if (winner === 1 && message.userId === battle.player1.userId) {
 						battle.player1.wins += 1;
-						console.log(`Battle ${currentBattleId} - Player 1 (${battle.player1.username}) won a round. Total wins: ${battle.player1.wins}`);
 					} else if (winner === 2 && message.userId === battle.player2?.userId) {
 						if (battle.player2) {
 							battle.player2.wins += 1;
-							console.log(`Battle ${currentBattleId} - Player 2 (${battle.player2.username}) won a round. Total wins: ${battle.player2.wins}`);
 						}
 					}
 
@@ -283,21 +268,6 @@ io.on('connection', (socket) => {
 						message: message.message,
 						senderId: message.userId
 					});
-
-					// Log sync data if present (but not too frequently)
-					if (message.message.syncData && !message.message.syncTime) {
-						console.log(`Battle ${currentBattleId} - Sync data sent from ${message.userId}`);
-					}
-
-					// Log play again requests
-					if (message.message.playAgainRequest) {
-						console.log(`Battle ${currentBattleId} - Play again request from ${message.userId}`);
-					}
-
-					// Log countdown start
-					if (message.message.startCountdown) {
-						console.log(`Battle ${currentBattleId} - Countdown started by ${message.userId}`);
-					}
 				}
 				break;
 
@@ -322,7 +292,6 @@ io.on('connection', (socket) => {
 
 					// Remove the battle
 					delete battles[message.battleId];
-					console.log(`Battle ${message.battleId} ended due to player leaving`);
 				}
 				break;
 
