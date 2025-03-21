@@ -12,7 +12,6 @@ db.exec(`
         wins INTEGER DEFAULT 0,
         losses INTEGER DEFAULT 0,
         lastActive INTEGER NOT NULL,
-        evolutionLevel INTEGER DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS battles (
@@ -31,14 +30,13 @@ db.exec(`
 // Prepare statements
 const getProfile = db.prepare('SELECT * FROM profiles WHERE userId = ?');
 const updateProfile = db.prepare(`
-    INSERT INTO profiles (userId, username, wins, losses, lastActive, evolutionLevel)
-    VALUES (@userId, @username, @wins, @losses, @lastActive, @evolutionLevel)
+    INSERT INTO profiles (userId, username, wins, losses, lastActive)
+    VALUES (@userId, @username, @wins, @losses, @lastActive)
     ON CONFLICT(userId) DO UPDATE SET
         username = @username,
         wins = @wins,
         losses = @losses,
-        lastActive = @lastActive,
-        evolutionLevel = @evolutionLevel
+        lastActive = @lastActive
 `);
 
 const insertBattle = db.prepare(`
@@ -58,7 +56,6 @@ export interface BlobProfile {
     wins: number;
     losses: number;
     lastActive: number;
-    evolutionLevel: number;
 }
 
 export interface BlobBattleRecord {
@@ -67,7 +64,6 @@ export interface BlobBattleRecord {
     player2: string;
     winner?: string;
     date: number;
-    moves: string[];
 }
 
 export const database = {
@@ -85,16 +81,11 @@ export const database = {
     recordBattle: (battle: BlobBattleRecord) => {
         insertBattle.run({
             ...battle,
-            moves: JSON.stringify(battle.moves)
         });
         return battle.id;
     },
 
     getRecentBattles: (): BlobBattleRecord[] => {
-        const battles = getRecentBattles.all() as (Omit<BlobBattleRecord, 'moves'> & { moves: string })[];
-        return battles.map(battle => ({
-            ...battle,
-            moves: JSON.parse(battle.moves)
-        }));
+        return getRecentBattles.all() as BlobBattleRecord[];
     }
 }; 

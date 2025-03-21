@@ -28,14 +28,13 @@ let matchmakingQueue: Array<{
 	username: string;
 	socketId: string;
 	appearance: any;
-	evolutionLevel: number;
 }> = [];
 
 let battles: Record<string, {
 	battleId: string;
 	code: string;
-	player1: { userId: string; username: string; socketId: string; appearance: any; evolutionLevel: number };
-	player2?: { userId: string; username: string; socketId: string; appearance: any; evolutionLevel: number };
+	player1: { userId: string; username: string; socketId: string; appearance: any };
+	player2?: { userId: string; username: string; socketId: string; appearance: any };
 	started: boolean;
 }> = {};
 
@@ -80,14 +79,12 @@ const processMatchmaking = () => {
 		battleId,
 		opponentName: player2.username,
 		opponentAppearance: player2.appearance,
-		opponentEvolutionLevel: player2.evolutionLevel
 	});
 	
 	io.to(player2.socketId).emit('MATCH_FOUND', {
 		battleId,
 		opponentName: player1.username,
 		opponentAppearance: player1.appearance,
-		opponentEvolutionLevel: player1.evolutionLevel
 	});
 	
 	// Broadcast the updated queue
@@ -123,8 +120,7 @@ io.on('connection', (socket) => {
 					userId: message.userId,
 					username: message.username || 'Anonymous',
 					socketId: socket.id,
-					appearance: message.appearance || {},
-					evolutionLevel: message.evolutionLevel || 1
+					appearance: message.appearance || {}
 				};
 				
 				console.log(`Player appearance data:`, 
@@ -132,7 +128,6 @@ io.on('connection', (socket) => {
 						{ type: message.appearance.type, attacks: message.appearance.selectedAttacks } : 
 						'None')
 				);
-				console.log(`Player evolution level: ${message.evolutionLevel || 1}`);
 				
 				// Remove any existing entries for this user
 				matchmakingQueue = matchmakingQueue.filter(p => p.userId !== message.userId);
@@ -173,17 +168,15 @@ io.on('connection', (socket) => {
 						{ type: message.appearance.type, attacks: message.appearance.selectedAttacks } : 
 						'None')
 				);
-				console.log(`Player evolution level: ${message.evolutionLevel || 1}`);
-				
+
 				battles[battleId] = {
-					battleId,
+					battleId,	
 					code: battleCode,
 					player1: {
 						userId: message.userId,
 						username: message.username || 'Anonymous',
 						socketId: socket.id,
-						appearance: message.appearance || {},
-						evolutionLevel: message.evolutionLevel || 1
+						appearance: message.appearance || {}
 					},
 					started: false
 				};
@@ -211,15 +204,13 @@ io.on('connection', (socket) => {
 						{ type: message.appearance.type, attacks: message.appearance.selectedAttacks } : 
 						'None')
 				);
-				console.log(`Player evolution level: ${message.evolutionLevel || 1}`);
-				
+
 				// Add player 2 to the battle
 				battleToJoin.player2 = {
 					userId: message.userId,
 					username: message.username || 'Anonymous',
 					socketId: socket.id,
-					appearance: message.appearance || {},
-					evolutionLevel: message.evolutionLevel || 1
+					appearance: message.appearance || {}
 				};
 				
 				battleToJoin.started = true;
@@ -232,14 +223,12 @@ io.on('connection', (socket) => {
 					battleId: battleToJoin.battleId,
 					opponentName: battleToJoin.player2.username,
 					opponentAppearance: battleToJoin.player2.appearance,
-					opponentEvolutionLevel: battleToJoin.player2.evolutionLevel
 				});
 				
 				socket.emit('MATCH_FOUND', {
 					battleId: battleToJoin.battleId,
 					opponentName: battleToJoin.player1.username,
 					opponentAppearance: battleToJoin.player1.appearance,
-					opponentEvolutionLevel: battleToJoin.player1.evolutionLevel
 				});
 				break;
 				
